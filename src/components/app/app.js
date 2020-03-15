@@ -5,23 +5,43 @@ import AppHeader from '../../components/app-header/app-header'
 import SearchPanel from '../../components/search-panel/search-panel'
 import ItemStatusFilter from '../../components/item-status-filter/item-status-filter'
 import TodoList from '../../components/todo-list/todo-list'
-
-
+import ItemAddForm from '../../components/item-add-from/item-add-from'
 
 export default class extends Component {
     constructor() {
         super();
 
+        this.maxId = 100;
+
+        this.createTodoItem = (label) => {
+            return {
+                label,
+                id: this.maxId++,
+                important: false,
+                done: false
+            }
+
+        };
+
         this.state = {
             todoData: [
-                {id: 1, label: 'Make Go'},
-                {id: 2, label: 'Drink Coffee', important: true},
-                {id: 3, label: 'Git status'}
+                this.createTodoItem('Make Go'),
+                this.createTodoItem('Drink Coffee'),
+                this.createTodoItem('Git status')
             ]
         };
 
+        this.onAdd = (text) => {
+            const newItem = this.createTodoItem(text);
+            this.setState(({ todoData}) => {
+                const newTodo = [...todoData, newItem];
+                return {
+                    todoData: newTodo
+                }
+            })
+        };
+
         this.onDeleted = (id) => {
-            console.log('onDeleted:', id);
             this.setState(({ todoData}) => {
                 return {
                     todoData: todoData.filter((item) => {
@@ -30,20 +50,54 @@ export default class extends Component {
                 }
             })
         };
+
+        this.onToggleProp = (array, id, propName) => {
+            const idx = array.findIndex(el => el.id === id);
+            const oldItem = array[idx];
+            const newItem = {
+                ...oldItem,
+                [propName]: !oldItem[propName]
+            };
+
+            return [
+                ...array.slice(0, idx),
+                newItem,
+                ...array.slice(idx + 1)
+            ];
+        };
+
+        this.onToggleDone = (id) => {
+            this.setState(({todoData}) => {
+                return {
+                    todoData: this.onToggleProp(todoData, id, 'done')
+                }
+            });
+        };
+
+        this.onToggleImportant = (id) => {
+            this.setState(({todoData}) => {
+                return {
+                    todoData: this.onToggleProp(todoData, id, 'important')
+                }
+            });
+        }
     }
 
     render() {
-        const isLogged = true;
-        const loginBox = <span>Log in please</span>;
-        const welcomeBox = <span>Welcome</span>;
-
         return (
             <div>
-                { isLogged ? welcomeBox : loginBox }
                 <AppHeader />
                 <SearchPanel />
                 <ItemStatusFilter />
-                <TodoList todos={this.state.todoData} onDeleted={this.onDeleted} />
+                <TodoList
+                    todos={this.state.todoData}
+                    onDeleted={this.onDeleted}
+                    onToggleDone={this.onToggleDone}
+                    onToggleImportant={this.onToggleImportant}
+                />
+                <ItemAddForm onAdd={this.onAdd} />
             </div>
-        );    }
+        );
+    }
+
 }
