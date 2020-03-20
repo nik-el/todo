@@ -1,11 +1,12 @@
-import React, { Component } from 'react';
-import ReactDOM from 'react-dom';
+import React, {Component} from 'react';
 
 import AppHeader from '../../components/app-header/app-header'
 import SearchPanel from '../../components/search-panel/search-panel'
 import ItemStatusFilter from '../../components/item-status-filter/item-status-filter'
 import TodoList from '../../components/todo-list/todo-list'
 import ItemAddForm from '../../components/item-add-from/item-add-from'
+
+import './app.css';
 
 export default class extends Component {
     constructor() {
@@ -28,7 +29,11 @@ export default class extends Component {
                 this.createTodoItem('Make Go'),
                 this.createTodoItem('Drink Coffee'),
                 this.createTodoItem('Git status')
-            ]
+            ],
+            filter: {
+                statusValue: '',
+                searchValue: '',
+            }
         };
 
         this.onAdd = (text) => {
@@ -80,17 +85,62 @@ export default class extends Component {
                     todoData: this.onToggleProp(todoData, id, 'important')
                 }
             });
+        };
+
+        this.onSearch = (value) => {
+            this.setState(({ filter}) => {
+                return {
+                    filter: {
+                        statusValue: filter.statusValue,
+                        searchValue: value
+                    }
+
+                }
+            })
+        };
+
+        this.onSelectStatus = (value) => {
+            this.setState(({ filter}) => {
+                return {
+                    filter: {
+                        statusValue: value,
+                        searchValue: filter.searchValue
+                    }
+
+                }
+            })
+        };
+
+        this.getFiltered = (array) => {
+            const searchValue =  this.state.filter.searchValue;
+            const statusValue =  this.state.filter.statusValue;
+            let filteredArray = array;
+
+            if (searchValue) {
+                filteredArray = filteredArray.filter((item) => {
+                    return item.label.toLowerCase().includes(searchValue.toLowerCase());
+                });
+            }
+            if (statusValue) {
+                filteredArray = filteredArray.filter((item) => {
+                    return (statusValue === 'done') ? item.done : !item.done;
+                });
+            }
+
+            return filteredArray;
         }
     }
 
     render() {
         return (
-            <div>
+            <div className='App'>
                 <AppHeader />
-                <SearchPanel />
-                <ItemStatusFilter />
+                <div className='d-flex'>
+                    <SearchPanel onSearch={this.onSearch}/>
+                    <ItemStatusFilter onSelectStatus={this.onSelectStatus}/>
+                </div>
                 <TodoList
-                    todos={this.state.todoData}
+                    todos={this.getFiltered(this.state.todoData)}
                     onDeleted={this.onDeleted}
                     onToggleDone={this.onToggleDone}
                     onToggleImportant={this.onToggleImportant}
